@@ -11,13 +11,21 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class Main {
-    private static final String BASE_PATH = "/Users/helen/IdeaProjects/TechAssignment/src/jobs/";
+    private static final String BASE_PATH = "./jobs/";
     private static final URI MAIN_URI = URI.create("https://cv.ee/api/v1/vacancies-service/search?limit=2000&offset=0&categories[]=INFORMATION_TECHNOLOGY&keywords[]=");
 
     public static void main(String[] args) throws JSONException {
+
+        try{
+            Path path = Paths.get(BASE_PATH);
+            Files.createDirectories(path);
+        } catch (IOException e) {
+            System.err.println("Failed to create directory" + e.getMessage());
+        }
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(MAIN_URI + keywordInput())).build();
