@@ -48,24 +48,29 @@ public class Main {
         int totalResults = responseObject.getInt("total");
         System.out.println("Result: " + totalResults + " jobs found");
 
+        if (totalResults == 0) {
+            return;
+        }
+
         //getting jobs applications array
         JSONArray array = responseObject.getJSONArray("vacancies");
         for (int i = 0; i < array.length(); i++) {
 
+            String positionContentError = "";
             String jobLink = "https://cv.ee/et/vacancy/" + array.getJSONObject(i).getInt("id");
-            System.out.println(jobLink);
 
             String jobPosition = array.getJSONObject(i).getString("positionTitle");
             String positionContent = "";
             try {
                 positionContent = array.getJSONObject(i).getString("positionContent");
             } catch (Exception ex) {
-                System.out.println("PositionContent not found!");
+                positionContentError = "PositionContent not found!";
             }
 
             String expirationDate = array.getJSONObject(i).getString("expirationDate");
             String employerName = array.getJSONObject(i).getString("employerName");
 
+            System.out.println("Jobs-" + (i+1) + ": " + jobLink + " " + positionContentError);
             writingFiles("Job-" + (i+1), jobPosition, positionContent, expirationDate, employerName);
         }
         System.out.println("More info is saved to the files.");
