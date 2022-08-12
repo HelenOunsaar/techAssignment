@@ -16,9 +16,17 @@ import java.util.Scanner;
 
 public class Main {
     private static final String BASE_PATH = "./jobs/";
-    private static final URI MAIN_URI = URI.create("https://cv.ee/api/v1/vacancies-service/search?limit=2000&offset=0&categories[]=INFORMATION_TECHNOLOGY&keywords[]=");
+    private static final URI MAIN_URI = URI.create("https://cv.ee/api/v1/vacancies-service/search?");
 
-    public static void main(String[] args) throws JSONException {
+    public static void main(String[] args) throws JSONException, IOException, InterruptedException {
+
+        makeDirectory();
+        String keywords = keywordInput();
+        int totalResults = getTotalResults(makeRequest(0, keywords));
+        saveJobsToFile(makeRequest(totalResults, keywords));
+    }
+
+    private static void makeDirectory() {
 
         try{
             Path path = Paths.get(BASE_PATH);
@@ -26,13 +34,16 @@ public class Main {
         } catch (IOException e) {
             System.err.println("Failed to create directory" + e.getMessage());
         }
+    }
+
+    private static String makeRequest (int limit, String keywords) throws IOException, InterruptedException {
 
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(MAIN_URI + keywordInput())).build();
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(Main::parse)
-                .join();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(MAIN_URI + String.format("categories[]=INFORMATION_TECHNOLOGY&limit=%s&offset=0&keywords[]=%s", limit, keywords)))
+                .build();
+
+        return client.send(request, HttpResponse.BodyHandlers.ofString()).body();
     }
 
     private static String keywordInput() {
@@ -41,16 +52,17 @@ public class Main {
         return scannerKeyword.nextLine();
     }
 
-    public static void parse(String responseBody) {
-        // using json jar library
-        // getting total job applications
+    public static int getTotalResults(String responseBody) {
+
         JSONObject responseObject = new JSONObject(responseBody);
         int totalResults = responseObject.getInt("total");
         System.out.println("Result: " + totalResults + " jobs found");
+        return totalResults;
+    }
 
-        if (totalResults == 0) {
-            return;
-        }
+
+    public static void saveJobsToFile(String responseBody) {
+        JSONObject responseObject = new JSONObject(responseBody);
 
         //getting jobs applications array
         JSONArray array = responseObject.getJSONArray("vacancies");
